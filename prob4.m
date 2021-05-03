@@ -106,7 +106,20 @@ plot(tau1,tau2);
 % end
 
 [GC,GR]=groupcounts(most_prob_actions');
-fprintf('no action: %d, east: %d, north: %d, south %d, west: %d\n',GC(1),GC(2),GC(3),GC(4),GC(5));
+for i=1:length(GR)
+    switch GR(i)
+        case 1
+            fprintf('no action: %d\n',GC(1));
+        case 2
+            fprintf('east: %d\n',GC(2));
+        case 3
+            fprintf('north: %d\n',GC(3));
+        case 4
+            fprintf('south: %d\n',GC(4));
+        case 5
+            fprintf('west: %d\n',GC(5));
+    end
+end
 
 
 %log-weights normalization
