@@ -57,8 +57,7 @@ Xarray(:,:,1)=X0;
 X=X0;
 w_array=zeros(N,n);
 w_array(:,1)=w;
-%ESS=zeros(1,n);
-ESS1=(sum(w.^2)/sum(w)^2)^(-1);
+ESS=(sum(w.^2)/sum(w)^2)^(-1)
 figure(2);
 hist(w)
 

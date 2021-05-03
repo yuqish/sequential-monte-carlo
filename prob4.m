@@ -59,15 +59,18 @@ Xarray(:,:,1)=X0;
 X=X0;
 w_array=zeros(N,n);
 w_array(:,1)=w;
-%ESS=zeros(1,n);
-ESS1=(sum(w.^2)/sum(w)^2)^(-1);
+ESS=(sum(w.^2)/sum(w)^2)^(-1)
 figure(2);
 hist(w)
-
+most_prob_actions=zeros(1,n);
+most_prob_actions(1)=mode(indexes);
 for i=1:n-1
     %resample
     index = randsample(N,N,true,w);
     X=X(:,index);
+    Zn=Zn(:,index);
+    indexes=indexes(:,index);
+    most_prob_actions(i+1)=mode(indexes);
     Wn=[0.5*randn;0.5*randn];
     %update X
     X=phi*X+phi_z*Zn+phi_w*Wn;
@@ -95,19 +98,17 @@ end
 
 figure(1);
 plot(pos_vec(1,:),pos_vec(2,:),'*');hold on;
-% plot(tau1,tau2);
-
-for i=1:n
-    figure(1);
-    plot(tau1(i),tau2(i),'r.');hold on;
-    pause(0.01)
-end
+plot(tau1,tau2);
 
 % for i=1:n
-%     figure(2);
-%     hist(w_array(:,i));hold on;
-%     pause(0.001)
+%     figure(1);
+%     plot(tau1(i),tau2(i),'r.');hold on;
+%     pause(0.01)
 % end
+
+[GC,GR]=groupcounts(most_prob_actions');
+fprintf('no action: %d, east: %d, north: %d, south %d, west: %d\n',GC(1),GC(2),GC(3),GC(4),GC(5));
+
 
 %log-weights normalization
 function w_out = log_normalize(log_w_in)
