@@ -1,6 +1,4 @@
-clc;
 clear;
-close all;
 
 load stations.mat;
 load RSSI-measurements-unknown-sigma.mat;
@@ -128,7 +126,7 @@ for i=1:n-1
     end
 end
 
-figure(1);
+figure(51);
 plot(pos_vec(1,:),pos_vec(2,:),'*');hold on;
 plot(tau1,tau2);
 

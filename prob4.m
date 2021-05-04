@@ -1,6 +1,4 @@
-clc;
 clear;
-close all;
 
 load stations.mat;
 load RSSI-measurements.mat;
@@ -60,7 +58,7 @@ X=X0;
 w_array=zeros(N,n);
 w_array(:,1)=w;
 ESS=(sum(w.^2)/sum(w)^2)^(-1)
-figure(2);
+figure(42);
 hist(w)
 most_prob_actions=zeros(1,n-1);
 for i=1:n-1
@@ -69,7 +67,6 @@ for i=1:n-1
     X=X(:,index);
     Zn=Zn(:,index);
     indexes=indexes(:,index);
-    most_prob_actions(i)=mode(indexes);
     Wn=[0.5*randn;0.5*randn];
     %update X
     X=phi*X+phi_z*Zn+phi_w*Wn;
@@ -78,7 +75,7 @@ for i=1:n-1
     %ESS
     if (mod((i+1),100) == 0)
         ESS=(sum(w.^2)/sum(w)^2)^(-1)
-        figure(i+1);
+        figure(42+floor(i+1));
         hist(w);
     end
     %tau
@@ -91,11 +88,17 @@ for i=1:n-1
         indexes(temp==j) = randsample(5,sum(temp==j),true,P(j,:));
         Zn(:,temp==j) = Z(:,indexes(temp==j));
     end
+    %finding most probable action
+    command_weights=zeros(1,5);
+    for j = 1:5
+        command_weights(j)=sum(w(indexes==j));
+    end
+    most_prob_actions(i)=find(command_weights==max(command_weights));
     Xarray(:,:,i+1)=X;
     w_array(:,i+1)=w;
 end
 
-figure(1);
+figure(41);
 plot(pos_vec(1,:),pos_vec(2,:),'*');hold on;
 plot(tau1,tau2);
 

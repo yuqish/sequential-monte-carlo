@@ -1,6 +1,4 @@
-clc;
 clear;
-close all;
 
 load stations.mat;
 load RSSI-measurements.mat;
@@ -57,8 +55,8 @@ Xarray(:,:,1)=X0;
 X=X0;
 w_array=zeros(N,n);
 w_array(:,1)=w;
-ESS=(sum(w.^2)/sum(w)^2)^(-1)
-figure(2);
+%ESS=(sum(w.^2)/sum(w)^2)^(-1)
+figure(32);
 hist(w)
 
 for i=1:n-1
@@ -69,8 +67,8 @@ for i=1:n-1
     w = p(X,Y(:,i+1)').*w;
     %ESS
     if (mod((i+1),100) == 0)
-        ESS=(sum(w.^2)/sum(w)^2)^(-1)
-        figure(i+1);
+        %ESS=(sum(w.^2)/sum(w)^2)^(-1)
+        figure(32+floor(i+1));
         hist(w);
     end
     w1 = log_normalize(log(w));
@@ -88,21 +86,38 @@ for i=1:n-1
     w_array(:,i+1)=w;
 end
 
-figure(1);
+figure(31);
 plot(pos_vec(1,:),pos_vec(2,:),'*');hold on;
-% plot(tau1,tau2);
+plot(tau1,tau2);
 
-for i=1:n
-    figure(1);
-    plot(tau1(i),tau2(i),'r.');hold on;
-    pause(0.01)
-end
+% for i=1:n
+%     figure(1);
+%     plot(tau1(i),tau2(i),'r.');hold on;
+%     pause(0.01)
+% end
 
 % for i=1:n
 %     figure(2);
 %     hist(w_array(:,i));hold on;
 %     pause(0.001)
 % end
+
+sampleN = zeros(1,n);
+sample_size = 0;
+dummy = Inf;
+for i = 1:n
+    CV2 = (1/N)*sum((N*(w_array(:,i)./sum(w_array(:,i)))-1).^2);
+    sampleN(i) = N/(1+CV2);
+    if sampleN(i)<dummy
+        dummy = sampleN(i);
+        sample_size = i;       
+    end
+end
+figure(1000)
+plot(sampleN,'b-','LineWidth',1.5)
+title('Effective Sample Size')
+xlabel('n')
+ylabel('Effective sample size')
 
 %log-weights normalization
 function w_out = log_normalize(log_w_in)
