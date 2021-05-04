@@ -1,0 +1,118 @@
+clear all, close all, clc
+
+load('RSSI-measurements.mat') % Y
+load('stations.mat') % pos_vec
+
+% Parameters & Initializations
+psi = 1.5^2;
+N = 10000;
+n = size(Y,2) - 1;
+P=1/20*[16 1 1 1 1; 1 16 1 1 1; 1 1 16 1 1; 1 1 1 16 1; 1 1 1 1 16];
+dt=0.5;
+alpha=0.6;
+v = 1.5^2;
+
+phiTilde = [1 dt (dt^2)/2;0 1 dt;0 0 alpha];
+psiTilde_z = [(dt^2)/2;dt;0];
+psiTilde_w = [(dt^2)/2;dt;1];
+phi = [phiTilde zeros(3,3); zeros(3,3) phiTilde];
+psi_z = [psiTilde_z zeros(3,1); zeros(3,1) psiTilde_z];
+psi_w = [psiTilde_w zeros(3,1); zeros(3,1) psiTilde_w];
+
+tau = zeros(2,n);
+
+% Defining transition density function
+y_pdf = @(x,y) mvnpdf(y,[90-10*3*log10(DIST(1,x,pos_vec));
+                    90-10*3*log10(DIST(2,x,pos_vec));
+                    90-10*3*log10(DIST(3,x,pos_vec));
+                    90-10*3*log10(DIST(4,x,pos_vec));
+                    90-10*3*log10(DIST(5,x,pos_vec));
+                    90-10*3*log10(DIST(6,x,pos_vec))]',diag([v,v,v,v,v,v],0)); % observation density, for weights
+
+% Initializing starting point & Weights
+part = mvnrnd(zeros(6,1),diag([500,5,5,200,5,5],0),N)';
+w = y_pdf(part,Y(:,1)');
+tau(1,1) = sum(part(1,:).*w')/sum(w);
+tau(2,1) = sum(part(4,:).*w')/sum(w);
+W_store(:,1) = w;
+
+
+Z = [[0;0] [3.5;0] [0;3.5] [0;-3.5] [-3.5;0]];
+MC = dtmc(P);
+sim_Z = simulate(MC,n);
+
+% Main Loop
+for k = 1:n
+   P1 = phi * part;
+   P2 = repmat(psi_z*Z(:,sim_Z(k)),1,N);
+   P3 = psi_w*mvnrnd([0;0],diag([0.25;0.25],0),N)';
+   w =  y_pdf(part,Y(:,k+1)').*w;
+   w = w / sum(w);
+
+    
+   part = P1 + P2 + P3;
+    
+  
+   % Evaluating the expectations 
+   tau(1,k+1) = sum(part(1,:).*w')/sum(w);
+   tau(2,k+1) = sum(part(4,:).*w')/sum(w);
+   W_store(:,k+1) = w;
+end 
+%% Vizualization & Presentation
+
+figure(1)
+plot(tau(1,:),tau(2,:),'*'); hold on;
+plot(pos_vec(1,:),pos_vec(2,:),'*','Color',[1 0 0]);
+title('Trajectory')
+xlabel('X_1')
+ylabel('X_2')
+grid on
+title('Simulated trajectory with SIS')
+
+% figure(2)
+% for i = 1:100
+%     histogram(W_store(:,i));
+%     pause(0.1);
+% end 
+
+% Plotting different histograms for report
+
+figure(2)
+histogram(W_store(:,1))
+title('Distribution of importance weights for n = 1')
+figure(3)
+histogram(W_store(:,20))
+title('Distribution of importance weights for n = 20')
+figure(4)
+histogram(W_store(:,100))
+title('Distribution of importance weights for n = 100')
+figure(4)
+histogram(W_store(:,200))
+title('Distribution of importance weights for n = 200')
+
+%% Vizualization with subplots
+subplot(4,1,1)
+histogram(W_store(:,1))
+title('Distribution of importance weights for different {\it n}')
+xlabel('n = 1','fontweight','bold')
+subplot(4,1,2)
+histogram(W_store(:,20))
+xlabel('n = 20','fontweight','bold')
+subplot(4,1,3)
+histogram(W_store(:,40))
+xlabel('n = 40','fontweight','bold')
+subplot(4,1,4)
+histogram(W_store(:,60))
+xlabel('n = 60','fontweight','bold')
+
+
+%% Helper Functions
+function distance = DIST(l,x, pos_vec)
+    part_final =  [x(1,:); x(4,:)]' -pos_vec(:,l)';
+    len = length(x(1,:));
+    dist_store = zeros(len,1);
+    for i=1:len
+        dist_store(i,1) = sqrt((part_final(i,1)^2)+((part_final(i,2))^2)); 
+        distance = dist_store';
+    end
+end
