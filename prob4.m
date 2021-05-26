@@ -5,7 +5,7 @@ load RSSI-measurements.mat;
 
 
 N = 10000;
-n = 500;
+n = 501;
 tau1 = zeros(1,n); % vector of estimates x1
 tau2 = zeros(1,n); % vector of estimates x2
 
@@ -64,14 +64,12 @@ most_prob_actions=zeros(1,n-1);
 for i=1:n-1
     %resample
     index = randsample(N,N,true,w);
-    X=X(:,index);
-    Zn=Zn(:,index);
+    X=X(:,index);  %resample Xn
+    Zn=Zn(:,index);   %resample Zn
     indexes=indexes(:,index);
     Wn=[0.5*randn;0.5*randn];
     %update X
     X=phi*X+phi_z*Zn+phi_w*Wn;
-    %update weight
-    w = p(X,Y(:,i+1)');
     %ESS
     if (mod((i+1),100) == 0)
         ESS=(sum(w.^2)/sum(w)^2)^(-1)
@@ -88,6 +86,9 @@ for i=1:n-1
         indexes(temp==j) = randsample(5,sum(temp==j),true,P(j,:));
         Zn(:,temp==j) = Z(:,indexes(temp==j));
     end
+    
+    %update weight
+    w = p(X,Y(:,i+1)');
     %finding most probable action
     command_weights=zeros(1,5);
     for j = 1:5
@@ -112,15 +113,15 @@ plot(tau1,tau2);
 for i=1:length(GR)
     switch GR(i)
         case 1
-            fprintf('no action: %d\n',GC(1));
+            fprintf('no action: %d\n',GC(i));
         case 2
-            fprintf('east: %d\n',GC(2));
+            fprintf('east: %d\n',GC(i));
         case 3
-            fprintf('north: %d\n',GC(3));
+            fprintf('north: %d\n',GC(i));
         case 4
-            fprintf('south: %d\n',GC(4));
+            fprintf('south: %d\n',GC(i));
         case 5
-            fprintf('west: %d\n',GC(5));
+            fprintf('west: %d\n',GC(i));
     end
 end
 

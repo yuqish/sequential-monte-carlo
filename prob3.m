@@ -5,7 +5,7 @@ load RSSI-measurements.mat;
 
 
 N = 10000;
-n = 500;
+n = 501;
 tau1 = zeros(1,n); % vector of estimates x1
 tau2 = zeros(1,n); % vector of estimates x2
 

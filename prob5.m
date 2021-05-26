@@ -5,7 +5,7 @@ load RSSI-measurements-unknown-sigma.mat;
 
 
 N = 10000;
-n = 500;
+n = 501;
 tau1 = zeros(1,n); % vector of estimates x1
 tau2 = zeros(1,n); % vector of estimates x2
 
@@ -52,20 +52,22 @@ Z0=Z(:,indexes); %initial Zn: Z0
 X=X0;
 
 sigma=0:0.1:3;
-likelihood=-1*ones(1,length(sigma));
+likelihood=-inf*ones(1,length(sigma));
+
 for k=2:length(sigma)
     sigma1=sigma(k);
-    disp(sigma1)
     w = p(X0,Y(:,1)',sigma1); %initialize weight
     if sum(w)<10^(-8)
-        disp('enter continue')
+        disp(['enter continue for sigma=',num2str(sigma1)]);
         continue;
     end
+    disp(['processing sigma=',num2str(sigma1)])
     X=X0;
     Zn=Z0;
     %tau
     tau1(1) = X0(1,:)*w/sum(w);
     tau2(1) = X0(4,:)*w/sum(w);
+    omega=[sum(w)]; %sum of weight
     for i=1:n-1
         %resample
         index = randsample(N,N,true,w);
@@ -87,9 +89,11 @@ for k=2:length(sigma)
             indexes(temp==j) = randsample(5,sum(temp==j),true,P(j,:));
             Zn(:,temp==j) = Z(:,indexes(temp==j));
         end
+        
+        %store sum weight
+        omega=[omega sum(w)];
     end
-    c=sum(w)/N;
-    likelihood(k)=n^(-1)*log(c);
+    likelihood(k)=log(prod(omega.^(1/(n-1)))/(N^(n/(n-1))));
 end
 
 [M,I]=max(likelihood)
@@ -125,6 +129,10 @@ for i=1:n-1
         Zn(:,temp==j) = Z(:,indexes(temp==j));
     end
 end
+figure(50);
+plot(sigma(10:end),likelihood(10:end))
+xlabel('sigma');
+ylabel('log-likelihood');
 
 figure(51);
 plot(pos_vec(1,:),pos_vec(2,:),'*');hold on;
